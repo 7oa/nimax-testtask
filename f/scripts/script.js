@@ -98,7 +98,7 @@
 
 	var _api2 = _interopRequireDefault(_api);
 
-	var _cart = __webpack_require__(28);
+	var _cart = __webpack_require__(29);
 
 	var _cart2 = _interopRequireDefault(_cart);
 
@@ -130,7 +130,7 @@
 	    (0, _createClass3.default)(Product, [{
 	        key: 'addCart',
 	        value: function addCart(item) {
-	            var productId = item.hasAttribute('data-product-id');
+	            var productId = parseInt(item.getAttribute('data-product-id'));
 
 	            item.classList.remove('button_fill');
 	            item.classList.add('button_border', 'product__button_buy');
@@ -459,6 +459,60 @@
 
 	'use strict';
 
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _classCallCheck2 = __webpack_require__(7);
+
+	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+	var _createClass2 = __webpack_require__(8);
+
+	var _createClass3 = _interopRequireDefault(_createClass2);
+
+	var _store = __webpack_require__(28);
+
+	var _store2 = _interopRequireDefault(_store);
+
+	var _cart = __webpack_require__(29);
+
+	var _cart2 = _interopRequireDefault(_cart);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var Api = (function () {
+	    function Api() {
+	        (0, _classCallCheck3.default)(this, Api);
+	    }
+
+	    (0, _createClass3.default)(Api, [{
+	        key: 'addCart',
+	        value: function addCart(productId) {
+	            _store2.default.addCart(productId);
+	            _cart2.default.addProduct(productId);
+	        }
+	    }, {
+	        key: 'fetch',
+	        value: function fetch() {
+	            // fetch()
+	        }
+	    }]);
+	    return Api;
+	})();
+
+	exports.default = new Api();
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
 	var _classCallCheck2 = __webpack_require__(7);
 
 	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
@@ -469,29 +523,58 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var Api = (function () {
-	    function Api() {
-	        (0, _classCallCheck3.default)(this, Api);
+	var Store = (function () {
+	    function Store() {
+	        (0, _classCallCheck3.default)(this, Store);
 
-	        console.log('constructor');
+	        this.actions = {};
+	        this.data = JSON.parse(document.getElementById('store').innerHTML);
 	    }
 
-	    (0, _createClass3.default)(Api, [{
+	    (0, _createClass3.default)(Store, [{
+	        key: 'get',
+	        value: function get(key) {
+	            return this.data[key];
+	        }
+	    }, {
 	        key: 'addCart',
 	        value: function addCart(productId) {
-	            console.log('addCart');
+	            this.data.cart.push({
+	                productId: productId,
+	                count: 1
+	            });
+
+	            this.subscribeUpdate('cart');
+	        }
+	    }, {
+	        key: 'subscribe',
+	        value: function subscribe(key, callback) {
+	            if (!(key in this.actions)) this.actions[key] = [];
+	            this.actions[key].push(callback);
+	        }
+	    }, {
+	        key: 'subscribeUpdate',
+	        value: function subscribeUpdate(key) {
+	            if (!(key in this.actions)) return;
+	            this.actions[key].map((function (item) {
+	                item();
+	            }));
 	        }
 	    }]);
-	    return Api;
+	    return Store;
 	})();
 
-	module.exports = new Api();
+	exports.default = new Store();
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
 
 	var _classCallCheck2 = __webpack_require__(7);
 
@@ -501,13 +584,25 @@
 
 	var _createClass3 = _interopRequireDefault(_createClass2);
 
-	var _scroll = __webpack_require__(29);
+	var _scroll = __webpack_require__(30);
 
 	var _scroll2 = _interopRequireDefault(_scroll);
 
-	var _counter = __webpack_require__(30);
+	var _store = __webpack_require__(28);
+
+	var _store2 = _interopRequireDefault(_store);
+
+	var _counter = __webpack_require__(31);
 
 	var _counter2 = _interopRequireDefault(_counter);
+
+	var _cartMini = __webpack_require__(32);
+
+	var _cartMini2 = _interopRequireDefault(_cartMini);
+
+	var _price = __webpack_require__(33);
+
+	var _price2 = _interopRequireDefault(_price);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -520,7 +615,12 @@
 	        this.el = {
 	            app: document.getElementsByClassName('app')[0],
 	            bg: document.getElementsByClassName('app__shadow')[0],
-	            close: document.getElementsByClassName('cart__close')[0]
+	            close: document.getElementsByClassName('cart__close')[0],
+	            list: document.getElementsByClassName('cart-list')[0]
+	        };
+
+	        this.data = {
+	            productTemplate: document.getElementById('cart-product-template').innerHTML
 	        };
 
 	        this.el.bg.addEventListener('click', (function (e) {
@@ -532,7 +632,14 @@
 	            _this.close();
 	            e.preventDefault();
 	        }));
+
+	        _store2.default.subscribe('cart', this.updatePrice);
 	    }
+
+	    /*
+	     Открываю корзину
+	     */
+
 
 	    (0, _createClass3.default)(Cart, [{
 	        key: 'open',
@@ -540,20 +647,76 @@
 	            this.el.app.classList.add('app_cart');
 	            _scroll2.default.disabled();
 	        }
+
+	        /*
+	         Закрываю корзину
+	         */
+
 	    }, {
 	        key: 'close',
 	        value: function close() {
 	            this.el.app.classList.remove('app_cart');
 	            _scroll2.default.enabled();
 	        }
+
+	        /*
+	         Пересчёт количества
+	         */
+
+	    }, {
+	        key: 'updatePrice',
+	        value: function updatePrice() {
+	            var cartProducts = _store2.default.get('cart');
+	            var products = _store2.default.get('products');
+
+	            var countProducts = 0;
+	            var priceProducts = 0;
+
+	            cartProducts.map((function (itemCart) {
+	                var product = products.filter((function (itemProduct) {
+	                    if (itemProduct.id == itemCart.productId) return itemProduct;
+	                }))[0];
+
+	                countProducts += itemCart.count;
+	                priceProducts += itemCart.count * parseFloat(product.price);
+	            }));
+
+	            _cartMini2.default.update(countProducts, priceProducts);
+	        }
+
+	        /*
+	         Добавляю товар в корзину
+	         */
+
+	    }, {
+	        key: 'addProduct',
+	        value: function addProduct(productId) {
+	            var template = document.createElement('div');
+	            template.innerHTML = this.data.productTemplate;
+	            template = template.children[0];
+
+	            var product = _store2.default.get('products').filter((function (item) {
+	                if (item.id == productId) return item;
+	            }))[0];
+
+	            template.setAttribute('data-id', product.id);
+	            template.getElementsByClassName('cart-item__name')[0].innerHTML = product.name;
+	            template.getElementsByClassName('cart-item__price')[0].innerHTML = template.getElementsByClassName('cart-item__price')[1].innerHTML = (0, _price2.default)(product.price);
+	            template.getElementsByClassName('counter__value')[0].value = 1;
+	            template.querySelector('.cart-item__image img').setAttribute('src', product.image);
+
+	            _counter2.default.build(template.getElementsByClassName('counter')[0]);
+
+	            this.el.list.append(template);
+	        }
 	    }]);
 	    return Cart;
 	})();
 
-	module.exports = new Cart();
+	exports.default = new Cart();
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -575,7 +738,7 @@
 	        this.scrollWidth = window.innerWidth - document.body.scrollWidth;
 
 	        this.el = {
-	            body: document.body,
+	            body: document.children[0],
 	            cart: document.getElementsByClassName('app__window')[0]
 	        };
 	    }
@@ -603,10 +766,14 @@
 	module.exports = new Scroll();
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
 
 	var _classCallCheck2 = __webpack_require__(7);
 
@@ -624,31 +791,40 @@
 
 	        (0, _classCallCheck3.default)(this, Counter);
 
-	        this.el = document.getElementsByClassName('counter').map((function (item, key) {
-	            return {
-	                block: item,
-	                input: item.getElementsByClassName('counter__value')[0],
-	                buttonPrev: item.getElementsByClassName('counter__action_minus')[0],
-	                buttonNext: item.getElementsByClassName('counter__action_plus')[0]
-	            };
-	        }));
+	        this.el = [];
 
-	        this.el.map((function (item) {
+	        document.getElementsByClassName('counter').map((function (item) {
+	            _this.build(item);
+	        }));
+	    }
+
+	    (0, _createClass3.default)(Counter, [{
+	        key: 'build',
+	        value: function build(elem) {
+	            var _this2 = this;
+
+	            var item = {
+	                block: elem,
+	                input: elem.getElementsByClassName('counter__value')[0],
+	                buttonPrev: elem.getElementsByClassName('counter__action_minus')[0],
+	                buttonNext: elem.getElementsByClassName('counter__action_plus')[0]
+	            };
+
 	            item.block.addEventListener('click', (function (e) {
 	                var parent = e.target.closest('.counter__action');
 	                if (parent) {
-	                    _this.button(item, parent.classList.contains('counter__action_minus'));
+	                    _this2.button(item, parent.classList.contains('counter__action_minus'));
 	                }
 	                e.preventDefault();
 	            }));
 
 	            item.input.addEventListener('keyup', (function () {
-	                _this.key(item);
+	                _this2.key(item);
 	            }));
-	        }));
-	    }
 
-	    (0, _createClass3.default)(Counter, [{
+	            this.el.push(item);
+	        }
+	    }, {
 	        key: 'button',
 	        value: function button(el, isMinus) {
 	            if (isMinus && el.buttonPrev.classList.contains('counter__action_disabled') || !isMinus && el.buttonNext.classList.contains('counter__action_disabled')) return;
@@ -698,7 +874,80 @@
 	    return Counter;
 	})();
 
-	module.exports = new Counter();
+	exports.default = new Counter();
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _classCallCheck2 = __webpack_require__(7);
+
+	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+	var _createClass2 = __webpack_require__(8);
+
+	var _createClass3 = _interopRequireDefault(_createClass2);
+
+	var _price = __webpack_require__(33);
+
+	var _price2 = _interopRequireDefault(_price);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var CartMini = (function () {
+	    function CartMini() {
+	        (0, _classCallCheck3.default)(this, CartMini);
+
+	        this.el = {
+	            app: document.getElementsByClassName('app')[0],
+	            block: document.getElementsByClassName('cart-mini')[0],
+	            price: document.getElementsByClassName('cart-sum__price')[0]
+	        };
+	    }
+
+	    (0, _createClass3.default)(CartMini, [{
+	        key: 'update',
+	        value: function update(countProducts, priceProducts) {
+	            if (countProducts == 0) {
+	                this.el.block.classList.remove('cart-mini_open');
+	                this.el.app.classList.remove('app_cart-mini');
+	            } else {
+	                this.el.block.classList.add('cart-mini_open');
+	                this.el.app.classList.add('app_cart-mini');
+	            }
+
+	            this.el.price.innerHTML = (0, _price2.default)(priceProducts);
+	        }
+	    }]);
+	    return CartMini;
+	})();
+
+	exports.default = new CartMini();
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	function Price(number, options) {
+	    if (number >= 10000) {
+	        number = ('' + number).replace(/(\d)(?=(\d\d\d)+([^\d]|$))/g, '$1 ').trim();
+	    }
+
+	    return number;
+	}
+
+	exports.default = Price;
 
 /***/ })
 /******/ ]);

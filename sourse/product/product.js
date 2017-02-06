@@ -21,7 +21,7 @@ class Product {
     }
 
     addCart(item) {
-        const productId = item.hasAttribute('data-product-id')
+        const productId = parseInt(item.getAttribute('data-product-id'))
 
         item.classList.remove('button_fill')
         item.classList.add('button_border', 'product__button_buy')

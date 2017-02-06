@@ -3,7 +3,7 @@ class Scroll {
         this.scrollWidth = window.innerWidth - document.body.scrollWidth
 
         this.el = {
-            body: document.body,
+            body: document.children[0],
             cart: document.getElementsByClassName('app__window')[0]
         }
     }

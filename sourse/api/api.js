@@ -1,12 +1,19 @@
+import Store from '../store/store'
+import Cart from '../cart/cart'
+
 class Api {
     constructor() {
-        console.log('constructor')
     }
 
     addCart(productId) {
-        console.log('addCart')
+        Store.addCart(productId)
+        Cart.addProduct(productId)
+    }
+
+    fetch() {
+        // fetch()
     }
 }
 
 
-module.exports = new Api()
+export default new Api()

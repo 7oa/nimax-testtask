@@ -16,6 +16,18 @@
             </div>
         {% endfor %}
     </div>
+
+    <div class="cart-mini">
+        <div class="cart-mini__text">
+            <div class="cart-footer__sum cart-footer__sum_original">
+                <div class="cart-sum">
+                    <div class="cart-sum__price">{% include 'blocks/price.twig' with { price: 27000, isCurrency: 1 } %}</div>
+                    <div class="cart-sum__descr">В корзине 14 товаров</div>
+                </div>
+            </div>
+        </div>
+        <button class="button button_size_xl button_fill button_color_blue">Оформить заказ</button>
+    </div>
 {% endblock %}
 
 {% block cart %}
@@ -33,7 +45,7 @@
                         <div class="cart-list__col cart-list__col_size_l">&nbsp;</div>
                     </div>
                         {#{% include 'blocks/cart-product.twig' with { id } %}#}
-                    <script type="text/html">{% include 'blocks/cart-product.twig' %}</script>
+                    <script type="text/html" id="cart-product-template">{% include 'blocks/cart-product.twig' %}</script>
                 </div>
             </div>
         </div>
@@ -51,7 +63,7 @@
                         {#</div>#}
                     {#</div>#}
                     <div class="cart-footer__sum cart-footer__sum_original">
-                        <div class="cart-sum cart-sum">
+                        <div class="cart-sum">
                             <div class="cart-sum__price">{% include 'blocks/price.twig' with { price: 27000, isCurrency: 1 } %}</div>
                             <div class="cart-sum__descr">Сумма заказа</div>
                         </div>
@@ -74,9 +86,13 @@
         {% set productsMini = productsMini|merge([{
             id: item.id,
             name: item.name,
-            price: item.price
+            price: item.price,
+            image: '/f/images/products/'~item.image
     }   ]) %}
     {% endfor %}
 
-    <script type="application/json" id="store">{{ ({ products: productsMini })|json_encode|raw }}</script>
+    <script type="application/json" id="store">{{ ({
+            products: productsMini,
+            cart: []
+        })|json_encode|raw }}</script>
 {% endblock %}

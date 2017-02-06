@@ -1,0 +1,19 @@
+.cart-mini {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 500;
+	background-color: #F1F1F1;
+	display: flex;
+	padding: 25px 40px 25px 40px;
+	justify-content: space-between;
+	align-items: center;
+	transition-property: opacity, transform;
+	transition-duration: .3s;
+	&:not(&_open) {
+		opacity: 0;
+		transform: translateY(50px);
+		pointer-events: none;
+	}
+}

@@ -1,27 +1,33 @@
 class Counter {
     constructor() {
-        this.el = document.getElementsByClassName('counter').map((item, key) => {
-            return {
-                block: item,
-                input: item.getElementsByClassName('counter__value')[0],
-                buttonPrev: item.getElementsByClassName('counter__action_minus')[0],
-                buttonNext: item.getElementsByClassName('counter__action_plus')[0]
+        this.el = []
+
+        document.getElementsByClassName('counter').map((item) => {
+            this.build(item)
+        })
+    }
+
+    build(elem) {
+        let item = {
+            block: elem,
+            input: elem.getElementsByClassName('counter__value')[0],
+            buttonPrev: elem.getElementsByClassName('counter__action_minus')[0],
+            buttonNext: elem.getElementsByClassName('counter__action_plus')[0]
+        }
+
+        item.block.addEventListener('click', (e) => {
+            let parent = e.target.closest('.counter__action')
+            if (parent) {
+                this.button(item, parent.classList.contains('counter__action_minus'))
             }
+            e.preventDefault()
         })
 
-        this.el.map((item) => {
-            item.block.addEventListener('click', (e) => {
-                let parent = e.target.closest('.counter__action')
-                if (parent) {
-                    this.button(item, parent.classList.contains('counter__action_minus'))
-                }
-                e.preventDefault()
-            })
-
-            item.input.addEventListener('keyup', () => {
-                this.key(item)
-            })
+        item.input.addEventListener('keyup', () => {
+            this.key(item)
         })
+
+        this.el.push(item)
     }
 
     button(el, isMinus) {
@@ -68,4 +74,4 @@ class Counter {
     }
 }
 
-module.exports = new Counter()
+export default new Counter()
