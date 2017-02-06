@@ -1,0 +1,13 @@
+{
+    "name": "shkurenko/nimax-testtask",
+    "authors": [
+        {
+            "name": "Artem Shkurenko",
+            "email": "artshkurenko@artshkurenko.ru"
+        }
+    ],
+    "require": {
+        "colshrapnel/safemysql": "^1.0",
+        "twig/twig": "^1.31"
+    }
+}

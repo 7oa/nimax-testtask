@@ -1,0 +1,22 @@
+.cart-sum {
+	&__price {
+		font-size: 36px;
+	}
+	&_small &__price {
+		font-size: 18px;
+		color: color(var(--color-gray) blackness(75%));
+	}
+
+	&__descr {
+		font-size: 12px;
+		text-transform: uppercase;
+		letter-spacing: .125em;
+		font-weight: bold;
+		margin-top: 2px;
+		color: var(--color-gray);
+		word-spacing: -.125em;
+	}
+	&_active &__descr {
+		color: var(--color-red);
+	}
+}

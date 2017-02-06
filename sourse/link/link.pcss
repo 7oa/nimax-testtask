@@ -1,0 +1,12 @@
+.link {
+	color: var(--color-blue_dark);
+	transition-property: color, border-bottom-color;
+	transition-duration: .3s;
+	&_pseudo {
+		border-bottom: 1px dashed color(var(--color-blue_dark) alpha(30%));
+	}
+	&:hover {
+		color: var(--color-red);
+		border-bottom-color: color(var(--color-red) alpha(30%));
+	}
+}

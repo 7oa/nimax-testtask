@@ -1,0 +1,26 @@
+<div class="cart-item" data-id="{% if id %}{{ id }}{% endif %}">
+	<div class="cart-item__col cart-item__col_size_xl cart-item__col_product">
+		<div class="cart-item__image">
+			<img src="{{ image }}" alt="{{ name }}">
+		</div>
+		<div class="cart-item__name">{{ name }}</div>
+	</div>
+	<div class="cart-item__col cart-item__col_size_m cart-item__col_right">
+		<div class="cart-item__price">{% if price %}{% include 'blocks/price.twig' with { price: price, isTrace: 1 } %}{% endif %}</div>
+	</div>
+	<div class="cart-item__col cart-item__col_size_m cart-item__col_center">
+		<div class="cart-item__counter">
+			<div class="counter">
+				<button class="counter__action counter__action_minus"></button>
+				<input type="number" class="counter__value" value="{% if count %}{{ count }}{% endif %}" min="1" max="99" step="1">
+				<button class="counter__action counter__action_plus"></button>
+			</div>
+		</div>
+	</div>
+	<div class="cart-item__col cart-item__col_size_m cart-item__col_right">
+		<div class="cart-item__price">{% if price and count %}{% include 'blocks/price.twig' with { price: price * count, isTrace: 1 } %}{% endif %}</div>
+	</div>
+	<div class="cart-item__col cart-item__col_size_l cart-item__col_right">
+		<button class="button button_border button_color_red button_size_s">Удалить</button>
+	</div>
+</div>

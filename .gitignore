@@ -1,0 +1,6 @@
+/vendor/
+/engine/cache/*
+!/engine/cache/.gitkeep
+/node_modules/
+/.idea/
+composer.lock

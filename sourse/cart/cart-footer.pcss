@@ -1,0 +1,26 @@
+.cart-footer {
+	display: flex;
+	justify-content: space-between;
+	&__sum {
+		&_discount {
+			display: flex;
+			align-items: flex-end;
+			height: 100%;
+			.cart-sum + .cart-sum {
+				margin-left: 46px;
+			}
+		}
+	}
+	&__block {
+		&_submit {
+			display: flex;
+			align-items: center;
+			.button {
+				margin-left: 5px;
+			}
+			div {
+				margin-bottom: -4px;
+			}
+		}
+	}
+}

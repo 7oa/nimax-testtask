@@ -1,0 +1,28 @@
+<div class="price">
+	{# Вывожу рубли #}
+	<div class="price__ceil">
+		{% if price < 10000 %}
+			{{ price|round(0, 'floor') }}
+		{% else %}
+			{{ price|number_format(0, '', '&thinsp;')|raw }}
+		{% endif %}
+	</div>
+
+	{# Вывожу копейки #}
+	{% set penny = (price * 100) % 100 %}
+	{% if penny > 0 %}
+		<div class="price__comma">,</div>
+		<div class="price__penny">
+			&nbsp;{{ penny }}
+		</div>
+	{% else %}
+		{% if isTrace %}
+			<div class="price__trace">.&mdash;</div>
+		{% endif %}
+	{% endif %}
+
+	{# Вывожу валюту #}
+	{% if isCurrency %}
+		&nbsp;<div class="price__currency">₽</div>
+	{% endif %}
+</div>
