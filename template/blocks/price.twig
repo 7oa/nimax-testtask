@@ -4,7 +4,7 @@
 		{% if price < 10000 %}
 			{{ price|round(0, 'floor') }}
 		{% else %}
-			{{ price|number_format(0, '', '&thinsp;')|raw }}
+			{{ price|round(0, 'floor')|number_format(0, '', '&thinsp;')|raw }}
 		{% endif %}
 	</div>
 

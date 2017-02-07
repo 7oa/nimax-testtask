@@ -11,7 +11,6 @@ let plugins = [
     require('postcss-media-minmax'),
     require('postcss-color-function'),
     require('pixrem'),
-    require('postcss-write-svg'),
     require('autoprefixer')({ browsers: 'last 5 version' })
 ]
 

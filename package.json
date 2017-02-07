@@ -33,6 +33,7 @@
     "babel-runtime": "^6.18.0",
     "css-loader": "^0.26.0",
     "cssnano": "^3.8.1",
+    "eslint": "^3.15.0",
     "extract-text-webpack-plugin": "^1.0.1",
     "optimize-js-plugin": "0.0.4",
     "path": "^0.12.7",

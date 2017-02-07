@@ -50,6 +50,8 @@ class Cart {
 
 
         Store.subscribe('cart', this.updatePrice)
+
+        console.log(Store.get('cart'))
     }
 
     /*
@@ -79,7 +81,6 @@ class Cart {
         let priceProducts = 0
 
         cartProducts.map((itemCart) => {
-            if (!itemCart) return
             let product = products.filter((itemProduct) => {
                 if (itemProduct.id == itemCart.productId) return itemProduct
             })[0]
@@ -90,6 +91,7 @@ class Cart {
         })
 
 
+        console.log(countProducts)
         if (countProducts == 0) this.close()
 
         let percentActive = 0

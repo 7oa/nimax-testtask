@@ -2,11 +2,13 @@ function Price(number, options = {}) {
     number = parseFloat(number)
 
     let ceil = parseInt(number)
+    console.log(number)
+    console.log(ceil)
     if (ceil >= 10000) {
         ceil = `${parseInt(ceil)}`.replace(/(\d)(?=(\d\d\d)+([^\d]|$))/g, '$1 ').trim().replace(' ', "&thinsp;")
     }
 
-    let penny = Math.ceil(number.toFixed(2) % 1 * 100)
+    let penny = Math.round(number.toFixed(2) % 1 * 100)
     if (penny) {
         penny = `<div class="price__comma">,</div><div class="price__penny">&nbsp;${penny}</div>`
     } else {

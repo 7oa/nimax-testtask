@@ -149,7 +149,7 @@
 	    {% endfor %}
 
 	    {% set cartMini = cartMini|merge([{
-            product_id: item.product_id,
+	        productId: item.product_id,
             count: item.count
 	    } ]) %}
     {% endfor %}

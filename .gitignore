@@ -4,3 +4,5 @@
 /node_modules/
 /.idea/
 composer.lock
+/f/scripts/
+/f/styles/
