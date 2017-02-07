@@ -14,7 +14,8 @@ class Cart {
             close: document.getElementsByClassName('cart__close')[0],
             list: document.getElementsByClassName('cart-list')[0],
             cartMiniButton: document.querySelector('.cart-mini .button'),
-            submitLink: document.querySelector('.cart-footer__block_submit .link')
+            submitLink: document.querySelector('.cart-footer__block_submit .link'),
+            counters: document.querySelectorAll('.cart-item .counter')
         }
 
         this.data = {
@@ -49,9 +50,11 @@ class Cart {
         })
 
 
-        Store.subscribe('cart', this.updatePrice)
+        this.el.counters.map((item) => {
+            Counter.subscribe(item, this.editProduct)
+        })
 
-        console.log(Store.get('cart'))
+        Store.subscribe('cart', this.updatePrice)
     }
 
     /*
@@ -91,7 +94,6 @@ class Cart {
         })
 
 
-        console.log(countProducts)
         if (countProducts == 0) this.close()
 
         let percentActive = 0
