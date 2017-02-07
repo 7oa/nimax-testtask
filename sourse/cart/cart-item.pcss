@@ -2,7 +2,15 @@
 	display: flex;
 	align-items: center;
 	height: 65px;
-	& + & {
+	transition-property: opacity, transform, height, margin;
+	transition-duration: .3s;
+	&_delete {
+		opacity: 0;
+		pointer-events: none;
+		transform: translateY(5px);
+		height: 0;
+	}
+	& + &:not(&_delete) {
 		margin-top: 20px;
 	}
 	&__col {

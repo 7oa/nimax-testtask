@@ -8,13 +8,14 @@
     <link rel="stylesheet" href="/f/styles/style.css">
 </head>
 <body>
-<div class="app">
+<div class="app{% if percent > 0 %} app_cart-mini{% endif %}">
     <div class="app__content">{% block content %}{% endblock %}</div>
     <div class="app__cart">
         <div class="app__shadow"></div>
         <div class="app__window">{% block cart %}{% endblock %}</div>
     </div>
     {% block store %}{% endblock %}
+    <script src="//cdn.polyfill.io/v2/polyfill.min.js?features=default,fetch,RequestElement,HTMLPictureElement&unknown=polyfill&flags=gated"></script>
     <script src="/f/scripts/script.js"></script>
 </div>
 </body>

@@ -1,5 +1,31 @@
 {% extends 'blocks/extends.twig' %}
 
+{% import 'blocks/declension.twig' as plugin %}
+
+{% set count = 0 %}
+{% set sum = 0 %}
+{% for item in cart %}
+    {% set count = count + item.count %}
+    {% for product in products %}
+        {% if product.id == item.product_id %}
+            {% set sum = sum + product.price * item.count %}
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+{% set percent = 0 %}
+{% for item in discounts %}
+    {% if (item.sum < sum and percent < item.percent) %}
+        {% set percent = item.percent %}
+    {% endif %}
+{% endfor %}
+
+
+{% if percent > 0 %}
+    {% set sumOriginal = sum %}
+    {% set sum = sum * (100 - percent) / 100 %}
+{% endif %}
+
 {% block content %}
     <h1>Каталог продукции</h1>
     <div class="catalog">
@@ -10,20 +36,28 @@
                 </div>
                 <div class="product__name">{{ product.name }}</div>
                 <div class="product__descr">{{ product.descr }}</div>
-                <button class="product__button button button_fill button_color_blue button_size_s" data-product-id="{{ product.id }}">
-                    {% include 'blocks/price.twig' with { price: product.price, isCurrency: 1 } %}
+	            {% set isCart = 0 %}
+                {% for item in cart %}
+                    {% if item.product_id == product.id %}
+	                    {% set isCart = 1 %}
+                    {% endif %}
+                {% endfor %}
+                <button class="product__button button button_size_s button_color_blue {% if isCart %}button_border product__button_buy{% else %} button_fill{% endif %}" data-product-id="{{ product.id }}">
+                    {% if isCart %}
+                        Товар в корзине
+                    {% else %}
+	                    {% include 'blocks/price.twig' with { price: product.price, isCurrency: 1 } %}
+                    {% endif %}
                 </button>
             </div>
         {% endfor %}
     </div>
 
-    <div class="cart-mini">
+    <div class="cart-mini{% if cart %} cart-mini_open{% endif %}">
         <div class="cart-mini__text">
-            <div class="cart-footer__sum cart-footer__sum_original">
-                <div class="cart-sum">
-                    <div class="cart-sum__price">{% include 'blocks/price.twig' with { price: 27000, isCurrency: 1 } %}</div>
-                    <div class="cart-sum__descr">В корзине 14 товаров</div>
-                </div>
+            <div class="cart-sum">
+                <div class="cart-sum__price">{% include 'blocks/price.twig' with { price: sum, isCurrency: 1 } %}</div>
+                <div class="cart-sum__descr">В корзине <span class="cart-mini__count">{{ plugin.declension(count, [ 'товар', 'товара', 'товаров' ], 1) }} </span></div>
             </div>
         </div>
         <button class="button button_size_xl button_fill button_color_blue">Оформить заказ</button>
@@ -44,27 +78,41 @@
                         <div class="cart-list__col cart-list__col_size_m cart-list__col_right">Сумма</div>
                         <div class="cart-list__col cart-list__col_size_l">&nbsp;</div>
                     </div>
-                        {#{% include 'blocks/cart-product.twig' with { id } %}#}
+
+	                {% for item in cart %}
+		                {% set count = count + item.count %}
+		                {% for product in products %}
+			                {% if product.id == item.product_id %}
+				                {% include 'blocks/cart-product.twig' with {
+                                    id: product.id,
+                                    name: product.name,
+				                    price: product.price,
+				                    image: '/f/images/products/'~product.image,
+                                    count: item.count
+                                } %}
+			                {% endif %}
+		                {% endfor %}
+	                {% endfor %}
                     <script type="text/html" id="cart-product-template">{% include 'blocks/cart-product.twig' %}</script>
                 </div>
             </div>
         </div>
         <div class="cart__footer">
             <div class="cart-footer cart__wrapper">
-                <div class="cart-footer__block cart-footer__block_sum">
-                    {#<div class="cart-footer__sum cart-footer__sum_discount">#}
-                        {#<div class="cart-sum cart-sum_active">#}
-                            {#<div class="cart-sum__price">{% include 'blocks/price.twig' with { price: 27000, isCurrency: 1 } %}</div>#}
-                            {#<div class="cart-sum__descr">Сумма со скидкой 5%</div>#}
-                        {#</div>#}
-                        {#<div class="cart-sum cart-sum_small">#}
-                            {#<div class="cart-sum__price">{% include 'blocks/price.twig' with { price: 40000, isCurrency: 1 } %}</div>#}
-                            {#<div class="cart-sum__descr">без скидки</div>#}
-                        {#</div>#}
-                    {#</div>#}
+                <div class="cart-footer__block cart-footer__block_sum {% if percent > 0 %}cart-footer__block_sum_discount{% else %}cart-footer__block_sum_original{% endif %}">
+                    <div class="cart-footer__sum cart-footer__sum_discount">
+                        <div class="cart-sum cart-sum_active">
+                            <div class="cart-sum__price">{% if percent > 0 %}{% include 'blocks/price.twig' with { price: sum, isCurrency: 1 } %}{% endif %}</div>
+                            <div class="cart-sum__descr">Сумма со скидкой <span class="cart-footer__percent">{{ percent }}</span>%</div>
+                        </div>
+                        <div class="cart-sum cart-sum_small">
+                            <div class="cart-sum__price">{% include 'blocks/price.twig' with { price: sumOriginal, isCurrency: 1 } %}</div>
+                            <div class="cart-sum__descr">без скидки</div>
+                        </div>
+                    </div>
                     <div class="cart-footer__sum cart-footer__sum_original">
                         <div class="cart-sum">
-                            <div class="cart-sum__price">{% include 'blocks/price.twig' with { price: 27000, isCurrency: 1 } %}</div>
+                            <div class="cart-sum__price">{% include 'blocks/price.twig' with { price: sum, isCurrency: 1 } %}</div>
                             <div class="cart-sum__descr">Сумма заказа</div>
                         </div>
                     </div>
@@ -91,8 +139,25 @@
     }   ]) %}
     {% endfor %}
 
+    {% set cartMini = [] %}
+    {% for item in cart %}
+        {% set price = 0 %}
+	    {% for product in products %}
+		    {% if product.id == item.product_id %}
+			    {% set price = product.price %}
+		    {% endif %}
+	    {% endfor %}
+
+	    {% set cartMini = cartMini|merge([{
+            product_id: item.product_id,
+            count: item.count
+	    } ]) %}
+    {% endfor %}
+
     <script type="application/json" id="store">{{ ({
             products: productsMini,
-            cart: []
+            cart: cartMini,
+            discounts: discounts,
+		    API_URL: '/?do=api'
         })|json_encode|raw }}</script>
 {% endblock %}

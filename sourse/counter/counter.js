@@ -67,9 +67,26 @@ class Counter {
         }
     }
 
+    subscribe(chooseBlock, callback) {
+        this.el.map((item) => {
+            if (item.block == chooseBlock) {
+                if (!('subscribe' in item)) {
+                    item.subscribe = []
+                }
+                item.subscribe.push(callback)
+            }
+        })
+    }
+
     updateValue(el, value) {
         if (parseInt(el.input.value) !== parseInt(value)) {
             el.input.value = value
+
+            if ('subscribe' in el) {
+                el.subscribe.map((callback) => {
+                    callback(el.block.closest('.cart-item').getAttribute('data-id'), value)
+                })
+            }
         }
     }
 }

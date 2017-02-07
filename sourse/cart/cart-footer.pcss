@@ -1,17 +1,35 @@
 .cart-footer {
 	display: flex;
 	justify-content: space-between;
+	white-space: nowrap;
 	&__sum {
+		position: absolute;
+		bottom: 0;
+		transition-property: opacity, transform;
+		transition-duration: .3s;
 		&_discount {
 			display: flex;
 			align-items: flex-end;
 			height: 100%;
+			.cart-footer__block_sum_original & {
+				opacity: 0;
+				transform: translateY(10px);
+			}
 			.cart-sum + .cart-sum {
 				margin-left: 46px;
 			}
 		}
+		&_original {
+			.cart-footer__block_sum_discount & {
+				opacity: 0;
+				transform: translateY(-10px);
+			}
+		}
 	}
 	&__block {
+		&_sum {
+			position: relative;
+		}
 		&_submit {
 			display: flex;
 			align-items: center;

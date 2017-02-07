@@ -80,6 +80,15 @@
 	    };
 	};
 
+	Array.prototype.remove = function (value) {
+	    var idx = this.indexOf(value);
+	    if (idx != -1) {
+	        // Второй параметр - число элементов, которые необходимо удалить
+	        return this.splice(idx, 1);
+	    }
+	    return false;
+	};
+
 /***/ }),
 /* 6 */
 /***/ (function(module, exports, __webpack_require__) {
@@ -463,6 +472,10 @@
 	    value: true
 	});
 
+	var _keys = __webpack_require__(38);
+
+	var _keys2 = _interopRequireDefault(_keys);
+
 	var _classCallCheck2 = __webpack_require__(7);
 
 	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
@@ -484,6 +497,8 @@
 	var Api = (function () {
 	    function Api() {
 	        (0, _classCallCheck3.default)(this, Api);
+
+	        this.API_URL = _store2.default.get('API_URL');
 	    }
 
 	    (0, _createClass3.default)(Api, [{
@@ -491,12 +506,47 @@
 	        value: function addCart(productId) {
 	            _store2.default.addCart(productId);
 	            _cart2.default.addProduct(productId);
+
+	            this.fetch('add', { product_id: productId });
+	        }
+	    }, {
+	        key: 'editCart',
+	        value: function editCart(productId, count) {
+	            _store2.default.editCart(productId, count);
+	            _cart2.default.updateSum(productId, count);
+	            _cart2.default.updatePrice();
+	            this.fetch('edit', { product_id: productId, count: count });
+	        }
+	    }, {
+	        key: 'deleteCart',
+	        value: function deleteCart(productId) {
+	            _store2.default.deleteCart(productId);
+	            _cart2.default.updatePrice();
+	            this.fetch('delete', { product_id: productId });
 	        }
 	    }, {
 	        key: 'fetch',
-	        value: function fetch() {
-	            // fetch()
-	        }
+	        value: (function (_fetch) {
+	            function fetch(_x, _x2) {
+	                return _fetch.apply(this, arguments);
+	            }
+
+	            fetch.toString = function () {
+	                return _fetch.toString();
+	            };
+
+	            return fetch;
+	        })((function (name, data) {
+	            data = (0, _keys2.default)(data).map((function (name) {
+	                return name + '=' + data[name];
+	            })).join("&");
+
+	            fetch(this.API_URL + '&name=' + name + '&' + data, {
+	                method: "GET",
+	                credentials: "include",
+	                headers: { "Content-type": "application/x-www-form-urlencoded; charset=UTF-8" }
+	            });
+	        }))
 	    }]);
 	    return Api;
 	})();
@@ -537,6 +587,13 @@
 	            return this.data[key];
 	        }
 	    }, {
+	        key: 'getProduct',
+	        value: function getProduct(productId) {
+	            return this.get('products').filter((function (item) {
+	                if (item.id == productId) return item;
+	            }))[0];
+	        }
+	    }, {
 	        key: 'addCart',
 	        value: function addCart(productId) {
 	            this.data.cart.push({
@@ -545,6 +602,26 @@
 	            });
 
 	            this.subscribeUpdate('cart');
+	        }
+	    }, {
+	        key: 'editCart',
+	        value: function editCart(productId, count) {
+	            this.data.cart.map((function (item) {
+	                if (item.productId == productId) {
+	                    item.count = count;
+	                }
+	            }));
+	        }
+	    }, {
+	        key: 'deleteCart',
+	        value: function deleteCart(productId) {
+	            var _this = this;
+
+	            this.data.cart.map((function (item, key) {
+	                if (item.productId == productId) {
+	                    delete _this.data.cart[key];
+	                }
+	            }));
 	        }
 	    }, {
 	        key: 'subscribe',
@@ -604,6 +681,14 @@
 
 	var _price2 = _interopRequireDefault(_price);
 
+	var _api = __webpack_require__(27);
+
+	var _api2 = _interopRequireDefault(_api);
+
+	var _cartFooter = __webpack_require__(35);
+
+	var _cartFooter2 = _interopRequireDefault(_cartFooter);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var Cart = (function () {
@@ -616,7 +701,9 @@
 	            app: document.getElementsByClassName('app')[0],
 	            bg: document.getElementsByClassName('app__shadow')[0],
 	            close: document.getElementsByClassName('cart__close')[0],
-	            list: document.getElementsByClassName('cart-list')[0]
+	            list: document.getElementsByClassName('cart-list')[0],
+	            cartMiniButton: document.querySelector('.cart-mini .button'),
+	            submitLink: document.querySelector('.cart-footer__block_submit .link')
 	        };
 
 	        this.data = {
@@ -631,6 +718,23 @@
 	        this.el.close.addEventListener('click', (function (e) {
 	            _this.close();
 	            e.preventDefault();
+	        }));
+
+	        this.el.submitLink.addEventListener('click', (function (e) {
+	            _this.close();
+	            e.preventDefault();
+	        }));
+
+	        this.el.cartMiniButton.addEventListener('click', (function (e) {
+	            _this.open();
+	            e.preventDefault();
+	        }));
+
+	        this.el.list.addEventListener('click', (function (e) {
+	            if (e.target.closest('.cart-item__col_right')) {
+	                _this.deleteProductAction(e);
+	                e.preventDefault();
+	            }
 	        }));
 
 	        _store2.default.subscribe('cart', this.updatePrice);
@@ -673,15 +777,54 @@
 	            var priceProducts = 0;
 
 	            cartProducts.map((function (itemCart) {
+	                if (!itemCart) return;
 	                var product = products.filter((function (itemProduct) {
 	                    if (itemProduct.id == itemCart.productId) return itemProduct;
 	                }))[0];
-
-	                countProducts += itemCart.count;
-	                priceProducts += itemCart.count * parseFloat(product.price);
+	                if (product) {
+	                    countProducts += itemCart.count;
+	                    priceProducts += itemCart.count * parseFloat(product.price);
+	                }
 	            }));
 
+	            if (countProducts == 0) this.close();
+
+	            var percentActive = 0;
+
+	            _store2.default.get('discounts').map((function (item) {
+	                if (percentActive < parseInt(item.percent) && priceProducts > parseInt(item.sum)) {
+	                    percentActive = parseInt(item.percent);
+	                }
+	            }));
+
+	            var originalPrice = 0;
+	            if (percentActive) {
+	                originalPrice = priceProducts;
+	                priceProducts *= (100 - percentActive) / 100;
+	            }
+
 	            _cartMini2.default.update(countProducts, priceProducts);
+	            _cartFooter2.default.update(countProducts, priceProducts, percentActive, originalPrice);
+	        }
+	    }, {
+	        key: 'updateSum',
+	        value: function updateSum(productId, count) {
+	            var product = _store2.default.getProduct(productId);
+
+	            var cartItem = document.querySelector('.cart-item[data-id=\'' + productId + '\'] .cart-item__price_sum');
+	            if (cartItem) {
+	                cartItem.innerHTML = (0, _price2.default)(product.price * count, { isTrace: true });
+	            }
+	        }
+	    }, {
+	        key: 'deleteProductAction',
+	        value: function deleteProductAction(e) {
+	            var block = e.target.closest('.cart-item');
+	            var productId = parseInt(block.getAttribute('data-id'));
+
+	            this.deleteProduct(block, productId);
+
+	            _api2.default.deleteCart(productId);
 	        }
 
 	        /*
@@ -691,6 +834,8 @@
 	    }, {
 	        key: 'addProduct',
 	        value: function addProduct(productId) {
+	            var _this2 = this;
+
 	            var template = document.createElement('div');
 	            template.innerHTML = this.data.productTemplate;
 	            template = template.children[0];
@@ -701,13 +846,36 @@
 
 	            template.setAttribute('data-id', product.id);
 	            template.getElementsByClassName('cart-item__name')[0].innerHTML = product.name;
-	            template.getElementsByClassName('cart-item__price')[0].innerHTML = template.getElementsByClassName('cart-item__price')[1].innerHTML = (0, _price2.default)(product.price);
+	            template.getElementsByClassName('cart-item__price')[0].innerHTML = template.getElementsByClassName('cart-item__price')[1].innerHTML = (0, _price2.default)(product.price, { isTrace: true });
 	            template.getElementsByClassName('counter__value')[0].value = 1;
 	            template.querySelector('.cart-item__image img').setAttribute('src', product.image);
 
 	            _counter2.default.build(template.getElementsByClassName('counter')[0]);
+	            _counter2.default.subscribe(template.getElementsByClassName('counter')[0], this.editProduct);
+
+	            template.getElementsByClassName('cart-item__remove')[0].addEventListener('click', (function (e) {
+	                _this2.deleteProductAction(e);
+	                e.preventDefault();
+	            }));
 
 	            this.el.list.append(template);
+	        }
+	    }, {
+	        key: 'editProduct',
+	        value: function editProduct(id, value) {
+	            _api2.default.editCart(id, value);
+	        }
+	    }, {
+	        key: 'deleteProduct',
+	        value: function deleteProduct(block, productId) {
+	            block.classList.add('cart-item_delete');
+
+	            var button = document.querySelector('.product__button[data-product-id=\'' + productId + '\']');
+
+	            button.classList.add('button_fill');
+	            button.classList.remove('button_border', 'product__button_buy');
+
+	            button.innerHTML = (0, _price2.default)(_store2.default.getProduct(productId).price, { isCurrency: true });
 	        }
 	    }]);
 	    return Cart;
@@ -864,10 +1032,28 @@
 	            }
 	        }
 	    }, {
+	        key: 'subscribe',
+	        value: function subscribe(chooseBlock, callback) {
+	            this.el.map((function (item) {
+	                if (item.block == chooseBlock) {
+	                    if (!('subscribe' in item)) {
+	                        item.subscribe = [];
+	                    }
+	                    item.subscribe.push(callback);
+	                }
+	            }));
+	        }
+	    }, {
 	        key: 'updateValue',
 	        value: function updateValue(el, value) {
 	            if (parseInt(el.input.value) !== parseInt(value)) {
 	                el.input.value = value;
+
+	                if ('subscribe' in el) {
+	                    el.subscribe.map((function (callback) {
+	                        callback(el.block.closest('.cart-item').getAttribute('data-id'), value);
+	                    }));
+	                }
 	            }
 	        }
 	    }]);
@@ -898,6 +1084,10 @@
 
 	var _price2 = _interopRequireDefault(_price);
 
+	var _decl = __webpack_require__(34);
+
+	var _decl2 = _interopRequireDefault(_decl);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var CartMini = (function () {
@@ -907,7 +1097,8 @@
 	        this.el = {
 	            app: document.getElementsByClassName('app')[0],
 	            block: document.getElementsByClassName('cart-mini')[0],
-	            price: document.getElementsByClassName('cart-sum__price')[0]
+	            price: document.querySelector('.cart-mini .cart-sum__price'),
+	            count: document.getElementsByClassName('cart-mini__count')[0]
 	        };
 	    }
 
@@ -922,7 +1113,8 @@
 	                this.el.app.classList.add('app_cart-mini');
 	            }
 
-	            this.el.price.innerHTML = (0, _price2.default)(priceProducts);
+	            this.el.price.innerHTML = (0, _price2.default)(priceProducts, { isCurrency: true });
+	            this.el.count.innerHTML = countProducts + '&nbsp;' + (0, _decl2.default)(countProducts, ['товар', 'товара', 'товаров']);
 	        }
 	    }]);
 	    return CartMini;
@@ -939,15 +1131,358 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	function Price(number, options) {
-	    if (number >= 10000) {
-	        number = ('' + number).replace(/(\d)(?=(\d\d\d)+([^\d]|$))/g, '$1 ').trim();
+	function Price(number) {
+	    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+	    number = parseFloat(number);
+
+	    var ceil = parseInt(number);
+	    if (ceil >= 10000) {
+	        ceil = ('' + parseInt(ceil)).replace(/(\d)(?=(\d\d\d)+([^\d]|$))/g, '$1 ').trim().replace(' ', "&thinsp;");
 	    }
 
-	    return number;
+	    var penny = Math.ceil(number.toFixed(2) % 1 * 100);
+	    if (penny) {
+	        penny = '<div class="price__comma">,</div><div class="price__penny">&nbsp;' + penny + '</div>';
+	    } else {
+	        penny = options.isTrace ? '<div class="price__trace">.&mdash;</div>' : '';
+	    }
+
+	    var isCurrency = '';
+	    if (options.isCurrency) {
+	        isCurrency = '&nbsp;<div class="price__currency">\u20BD</div>';
+	    }
+
+	    return '<div class="price">\n        <div class="price__ceil">' + ceil + '</div>\n        ' + penny + '\n        ' + isCurrency + '\n    </div>';
 	}
 
 	exports.default = Price;
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	/*
+	 declOfNum(count, ['1 - Яблоко', '2 - Яблока', '10 - Яблок'])
+	 */
+
+	function Decl(number, titles) {
+	    number = parseInt(number);
+
+	    var cases = [2, 0, 1, 1, 1, 2];
+
+	    return titles[number % 100 > 4 && number % 100 < 20 ? 2 : cases[number % 10 < 5 ? number % 10 : 5]];
+	}
+
+	exports.default = Decl;
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _classCallCheck2 = __webpack_require__(7);
+
+	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+	var _createClass2 = __webpack_require__(8);
+
+	var _createClass3 = _interopRequireDefault(_createClass2);
+
+	var _price = __webpack_require__(33);
+
+	var _price2 = _interopRequireDefault(_price);
+
+	var _decl = __webpack_require__(34);
+
+	var _decl2 = _interopRequireDefault(_decl);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var CartFooter = (function () {
+	    function CartFooter() {
+	        (0, _classCallCheck3.default)(this, CartFooter);
+
+	        this.el = {
+	            block: document.getElementsByClassName('cart-footer__block_sum')[0],
+	            discountPrice: document.querySelector('.cart-footer__sum_discount .cart-sum_active .cart-sum__price'),
+	            discountOriginalPrice: document.querySelector('.cart-footer__sum_discount .cart-sum_small .cart-sum__price'),
+	            discountPercent: document.querySelector('.cart-footer__percent'),
+	            originalPrice: document.querySelector('.cart-footer__sum_original .cart-sum__price')
+	        };
+	    }
+
+	    (0, _createClass3.default)(CartFooter, [{
+	        key: 'update',
+	        value: function update(countProducts, priceProducts, percentActive, originalPriceProducts) {
+	            if (percentActive) {
+	                this.el.block.classList.add('cart-footer__block_sum_discount');
+	                this.el.block.classList.remove('cart-footer__block_sum_original');
+
+	                this.el.discountPrice.innerHTML = (0, _price2.default)(priceProducts, { isCurrency: true });
+	                this.el.discountOriginalPrice.innerHTML = (0, _price2.default)(originalPriceProducts, { isCurrency: true });
+	                this.el.discountOriginalPrice.innerHTML = (0, _price2.default)(originalPriceProducts, { isCurrency: true });
+	                this.el.discountPercent.innerHTML = percentActive;
+	            } else {
+	                this.el.block.classList.add('cart-footer__block_sum_original');
+	                this.el.block.classList.remove('cart-footer__block_sum_discount');
+
+	                this.el.originalPrice.innerHTML = (0, _price2.default)(priceProducts, { isCurrency: true });
+	            }
+	        }
+	    }]);
+	    return CartFooter;
+	})();
+
+	exports.default = new CartFooter();
+
+/***/ }),
+/* 36 */,
+/* 37 */,
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(39), __esModule: true };
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	__webpack_require__(40);
+	module.exports = __webpack_require__(14).Object.keys;
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	// 19.1.2.14 Object.keys(O)
+	var toObject = __webpack_require__(41)
+	  , $keys    = __webpack_require__(43);
+
+	__webpack_require__(57)('keys', (function(){
+	  return function keys(it){
+	    return $keys(toObject(it));
+	  };
+	}));
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	// 7.1.13 ToObject(argument)
+	var defined = __webpack_require__(42);
+	module.exports = function(it){
+	  return Object(defined(it));
+	};
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports) {
+
+	// 7.2.1 RequireObjectCoercible(argument)
+	module.exports = function(it){
+	  if(it == undefined)throw TypeError("Can't call method on  " + it);
+	  return it;
+	};
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	// 19.1.2.14 / 15.2.3.14 Object.keys(O)
+	var $keys       = __webpack_require__(44)
+	  , enumBugKeys = __webpack_require__(56);
+
+	module.exports = Object.keys || function keys(O){
+	  return $keys(O, enumBugKeys);
+	};
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var has          = __webpack_require__(45)
+	  , toIObject    = __webpack_require__(46)
+	  , arrayIndexOf = __webpack_require__(49)(false)
+	  , IE_PROTO     = __webpack_require__(53)('IE_PROTO');
+
+	module.exports = function(object, names){
+	  var O      = toIObject(object)
+	    , i      = 0
+	    , result = []
+	    , key;
+	  for(key in O)if(key != IE_PROTO)has(O, key) && result.push(key);
+	  // Don't enum bug & hidden keys
+	  while(names.length > i)if(has(O, key = names[i++])){
+	    ~arrayIndexOf(result, key) || result.push(key);
+	  }
+	  return result;
+	};
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports) {
+
+	var hasOwnProperty = {}.hasOwnProperty;
+	module.exports = function(it, key){
+	  return hasOwnProperty.call(it, key);
+	};
+
+/***/ }),
+/* 46 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	// to indexed object, toObject with fallback for non-array-like ES3 strings
+	var IObject = __webpack_require__(47)
+	  , defined = __webpack_require__(42);
+	module.exports = function(it){
+	  return IObject(defined(it));
+	};
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	// fallback for non-array-like ES3 and non-enumerable old V8 strings
+	var cof = __webpack_require__(48);
+	module.exports = Object('z').propertyIsEnumerable(0) ? Object : function(it){
+	  return cof(it) == 'String' ? it.split('') : Object(it);
+	};
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports) {
+
+	var toString = {}.toString;
+
+	module.exports = function(it){
+	  return toString.call(it).slice(8, -1);
+	};
+
+/***/ }),
+/* 49 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	// false -> Array#indexOf
+	// true  -> Array#includes
+	var toIObject = __webpack_require__(46)
+	  , toLength  = __webpack_require__(50)
+	  , toIndex   = __webpack_require__(52);
+	module.exports = function(IS_INCLUDES){
+	  return function($this, el, fromIndex){
+	    var O      = toIObject($this)
+	      , length = toLength(O.length)
+	      , index  = toIndex(fromIndex, length)
+	      , value;
+	    // Array#includes uses SameValueZero equality algorithm
+	    if(IS_INCLUDES && el != el)while(length > index){
+	      value = O[index++];
+	      if(value != value)return true;
+	    // Array#toIndex ignores holes, Array#includes - not
+	    } else for(;length > index; index++)if(IS_INCLUDES || index in O){
+	      if(O[index] === el)return IS_INCLUDES || index || 0;
+	    } return !IS_INCLUDES && -1;
+	  };
+	};
+
+/***/ }),
+/* 50 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	// 7.1.15 ToLength
+	var toInteger = __webpack_require__(51)
+	  , min       = Math.min;
+	module.exports = function(it){
+	  return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
+	};
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports) {
+
+	// 7.1.4 ToInteger
+	var ceil  = Math.ceil
+	  , floor = Math.floor;
+	module.exports = function(it){
+	  return isNaN(it = +it) ? 0 : (it > 0 ? floor : ceil)(it);
+	};
+
+/***/ }),
+/* 52 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var toInteger = __webpack_require__(51)
+	  , max       = Math.max
+	  , min       = Math.min;
+	module.exports = function(index, length){
+	  index = toInteger(index);
+	  return index < 0 ? max(index + length, 0) : min(index, length);
+	};
+
+/***/ }),
+/* 53 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var shared = __webpack_require__(54)('keys')
+	  , uid    = __webpack_require__(55);
+	module.exports = function(key){
+	  return shared[key] || (shared[key] = uid(key));
+	};
+
+/***/ }),
+/* 54 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var global = __webpack_require__(13)
+	  , SHARED = '__core-js_shared__'
+	  , store  = global[SHARED] || (global[SHARED] = {});
+	module.exports = function(key){
+	  return store[key] || (store[key] = {});
+	};
+
+/***/ }),
+/* 55 */
+/***/ (function(module, exports) {
+
+	var id = 0
+	  , px = Math.random();
+	module.exports = function(key){
+	  return 'Symbol('.concat(key === undefined ? '' : key, ')_', (++id + px).toString(36));
+	};
+
+/***/ }),
+/* 56 */
+/***/ (function(module, exports) {
+
+	// IE 8- don't enum bug keys
+	module.exports = (
+	  'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
+	).split(',');
+
+/***/ }),
+/* 57 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	// most Object methods by ES6 should accept primitives
+	var $export = __webpack_require__(12)
+	  , core    = __webpack_require__(14)
+	  , fails   = __webpack_require__(23);
+	module.exports = function(KEY, exec){
+	  var fn  = (core.Object || {})[KEY] || Object[KEY]
+	    , exp = {};
+	  exp[KEY] = exec(fn);
+	  $export($export.S + $export.F * fails((function(){ fn(1); })), 'Object', exp);
+	};
 
 /***/ })
 /******/ ]);

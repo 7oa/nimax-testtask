@@ -1,11 +1,13 @@
 import Price from '../price/price'
+import Decl from '../decl/decl'
 
 class CartMini {
     constructor() {
         this.el = {
             app: document.getElementsByClassName('app')[0],
             block: document.getElementsByClassName('cart-mini')[0],
-            price: document.getElementsByClassName('cart-sum__price')[0]
+            price: document.querySelector('.cart-mini .cart-sum__price'),
+            count: document.getElementsByClassName('cart-mini__count')[0],
         }
     }
 
@@ -18,7 +20,8 @@ class CartMini {
             this.el.app.classList.add('app_cart-mini')
         }
 
-        this.el.price.innerHTML = Price(priceProducts)
+        this.el.price.innerHTML = Price(priceProducts, { isCurrency: true })
+        this.el.count.innerHTML = `${countProducts}&nbsp;${Decl(countProducts, [ 'товар', 'товара', 'товаров' ])}`
     }
 }
 

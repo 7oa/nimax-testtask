@@ -6,7 +6,7 @@
 		<div class="cart-item__name">{{ name }}</div>
 	</div>
 	<div class="cart-item__col cart-item__col_size_m cart-item__col_right">
-		<div class="cart-item__price">{% if price %}{% include 'blocks/price.twig' with { price: price, isTrace: 1 } %}{% endif %}</div>
+		<div class="cart-item__price cart-item__price_single">{% if price %}{% include 'blocks/price.twig' with { price: price, isTrace: 1 } %}{% endif %}</div>
 	</div>
 	<div class="cart-item__col cart-item__col_size_m cart-item__col_center">
 		<div class="cart-item__counter">
@@ -18,9 +18,9 @@
 		</div>
 	</div>
 	<div class="cart-item__col cart-item__col_size_m cart-item__col_right">
-		<div class="cart-item__price">{% if price and count %}{% include 'blocks/price.twig' with { price: price * count, isTrace: 1 } %}{% endif %}</div>
+		<div class="cart-item__price cart-item__price_sum">{% if price and count %}{% include 'blocks/price.twig' with { price: price * count, isTrace: 1 } %}{% endif %}</div>
 	</div>
 	<div class="cart-item__col cart-item__col_size_l cart-item__col_right">
-		<button class="button button_border button_color_red button_size_s">Удалить</button>
+		<button class="button button_border button_color_red button_size_s cart-item__remove">Удалить</button>
 	</div>
 </div>
