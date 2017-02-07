@@ -10,6 +10,7 @@ function Price(number, options = {}) {
 
     let penny = Math.round(number.toFixed(2) % 1 * 100)
     if (penny) {
+        if (penny < 10) penny = `0${penny}`
         penny = `<div class="price__comma">,</div><div class="price__penny">&nbsp;${penny}</div>`
     } else {
         penny = (options.isTrace) ? `<div class="price__trace">.&mdash;</div>` : ''
